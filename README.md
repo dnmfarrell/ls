@@ -6,7 +6,7 @@ A C library that lists all files in adirectory including their permissions, file
 Version
 -------
 
-Version 0.01
+Version 0.02
 
 
 Synopsis
