@@ -47,54 +47,64 @@ void print_file_details (struct stat fd, char filename[])
 
 void print_dir_details(char dir[])
 {
-   struct dirent *pDirent;
+    struct dirent *pDirent;
     DIR *pDir;
-   pDir = opendir (dir);
+    pDir = opendir (dir);
 
-   if (pDir != NULL)
-   {
-      while ((pDirent = readdir(pDir)) != NULL)
-      {
-         struct stat file_stats;
-         if(stat(pDirent->d_name,&file_stats) < 0)
-         {
-            break;
-         }
-         print_file_details(file_stats, pDirent->d_name);
-      }
-   }
+    if (pDir != NULL)
+    {
+        while ((pDirent = readdir(pDir)) != NULL)
+        {
+            //construct abs file path
+            char filepath[1024];
+            sprintf(filepath, "%s/%s", dir, pDirent->d_name);
+
+            struct stat file_stats;
+            if(stat(filepath,&file_stats) < 0)
+            {
+                break;
+            }
+            print_file_details(file_stats, pDirent->d_name);
+        }
+    }
     closedir (pDir);
 }
 
-int main(int argc, char *argv[]) {
-
+int main(int argc, char *argv[])
+{
     char cwd[1024];
+    getcwd(cwd, sizeof(cwd));
+    int len = strlen(cwd);
 
-    if (argc < 2) {
-        // use current working directory
-        getcwd(cwd, sizeof(cwd));
+    char full_path[1024];
+
+    if (argc > 1)
+    {
+        int arg_len = strlen(argv[1]);
+        int full_len = 1 + len + arg_len;
+        sprintf(full_path, "%s/%s", cwd, argv[1]);
+        full_path[full_len] = '\0';
     }
-    else {
-      int len = strlen(argv[1]);
-        strncpy(cwd, argv[1], len);
-      cwd[len] = '\0';
+    else
+    {
+        strncpy(full_path, cwd, len);
+        full_path[len] = '\0';
     }
 
     struct stat file_stats;
-    if(stat(cwd,&file_stats) < 0)
-   {
-      puts("File not found");
+    if(stat(full_path,&file_stats) < 0)
+    {
         return 1;
-   }
+    }
 
-   // it's a directory so open it
-   if (S_ISDIR(file_stats.st_mode))
-   {
-      print_dir_details(cwd);
-   }
-   else {
-      print_file_details(file_stats, cwd);
-   }
+    // it's a directory so open it
+    if (S_ISDIR(file_stats.st_mode))
+    {
+        print_dir_details(full_path);
+    }
+    else {
+        print_file_details(file_stats, full_path);
+    }
 
     return 0;
 }
